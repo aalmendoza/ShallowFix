@@ -34,7 +34,7 @@ def validate_args(args):
 	assert os.path.isdir(args.save_dir), "SAVE_DIR {0} doesn't exist".format(args.save_dir)
 	assert os.path.isfile(os.path.join(args.save_dir,"config.pkl")),"config.pkl file does not exist in path %s"%args.save_dir
 	assert os.path.isfile(os.path.join(args.save_dir,"chars_vocab.pkl")),"chars_vocab.pkl file does not exist in path %s"%args.save_dir
-	assert os.path.isfile(os.path.join(args.save_dir,"config.pkl")),"TOKEN_FILEL {0} doesn't exist".format(args.token_file)
+	assert os.path.isfile(args.token_file),"TOKEN_FILE {0} doesn't exist".format(args.token_file)
 	assert args.out_file.endswith('.pkl'), 'OUT_FILE must have extension .pkl'
 
 def get_entropy_stats(args):
