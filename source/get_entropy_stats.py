@@ -23,9 +23,19 @@ def main():
 					   help='model directory to store checkpointed models')
 	parser.add_argument('--token_file', type=str, default='test.txt',
 					   help = 'token file to find entropy values for')
+	parser.add_argument('--out_file', type=str, default='entropy_stats.pkl',
+					   help='File basename to be stored in SAVE_DIR. Must be a .pkl file')
 
 	args = parser.parse_args()
+	validate_args(args)
 	get_entropy_stats(args)
+
+def validate_args(args):
+	assert os.path.isdir(args.save_dir), "SAVE_DIR {0} doesn't exist".format(args.save_dir)
+	assert os.path.isfile(os.path.join(args.save_dir,"config.pkl")),"config.pkl file does not exist in path %s"%args.save_dir
+	assert os.path.isfile(os.path.join(args.save_dir,"chars_vocab.pkl")),"chars_vocab.pkl file does not exist in path %s"%args.save_dir
+	assert os.path.isfile(os.path.join(args.save_dir,"config.pkl")),"TOKEN_FILEL {0} doesn't exist".format(args.token_file)
+	assert args.out_file.endswith('.pkl'), 'OUT_FILE must have extension .pkl'
 
 def get_entropy_stats(args):
 	with open(os.path.join(args.save_dir, 'config.pkl'), 'rb') as f:
@@ -42,7 +52,7 @@ def get_entropy_stats(args):
 			saver.restore(sess, ckpt.model_checkpoint_path)
 			entropy_dist_stats = model.get_entropy_stats(sess, chars, 
 				vocab, args.token_file)
-			with open(os.path.join(args.save_dir, 'entropy_distribution_stats.pkl'), 'wb') as f:
+			with open(os.path.join(args.save_dir, args.out_file), 'wb') as f:
 				cPickle.dump(entropy_dist_stats, f)
 
 if __name__ == '__main__':
