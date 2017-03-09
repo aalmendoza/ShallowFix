@@ -213,6 +213,9 @@ def singleStringToken(strToken):
 
 #Handles the case where there are baskslahes in the string to reduce to a single item.
 def collapseStrings(tokens):
+    if len(tokens) == 0:
+        return []
+
     newTokens = []
     newTokens.append(tokens[0])
     for t in tokens[1:]:
