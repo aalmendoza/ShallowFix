@@ -115,7 +115,7 @@ def main(sourcePath, outputPath, strFlag, token_split, SKIP_BIG, EXPLICIT_TYPE_W
     #Remove empty files (all comments).
     if(len(lexedWoComments) == 0):
         print("Skipping: " + sourcePath)
-        return
+        return False
 
     
     (lineCount, ave, lineDict, lineLengths) = getLineMetrics(lexedWoComments)
@@ -172,10 +172,7 @@ def main(sourcePath, outputPath, strFlag, token_split, SKIP_BIG, EXPLICIT_TYPE_W
         # print("Normal File: " + sourcePath)
         writeLexedFile(outputPath, noWSTokens, token_split, EXPLICIT_TYPE_WRITE)
 
-
-    #Increment output file count
-    if skip:
-        skip = False
+    return len(noWSTokens) > 0
 
 if __name__ == "__main__":
     if len(sys.argv) < 7:
