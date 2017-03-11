@@ -6,7 +6,7 @@ from six.moves import cPickle
 
 def main():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--b_f_csv', type=str, default='../../data/student/buggy_fix_ce_list_updated.csv',
+	parser.add_argument('--b_f_csv', type=str, default='../data/student/buggy_fix_ce_list_updated.csv',
 					   help='csv specifying buggy fix pairs')
 	parser.add_argument('--granularity', type=str, default='line',
 					   help='granularity to check diff. Use line or token.')
