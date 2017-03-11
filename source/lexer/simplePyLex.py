@@ -20,34 +20,28 @@ EXPLICIT_TYPE_WRITE = False
 #file id, write out the tokens to file
 #Precondition: files must be less than MAX_SIZE tokens (large files seem to
 #cause problems with Zhaopeng's cache model.
-def writeLexedFile(outputFile, lexedWoComments, flag, explicitWrite):
-    #print(lexedWoComments)
+def writeLexedFile(outputFile, lexedWoComments, flag, explicitWrite, keepLines):
     assert(len(lexedWoComments) <= MAX_SIZE)
-    #Uncomment if you want to copy the actual java file too.
-    #Commented out to save space.
-    #call(["cp", path, outputDir + "/" + str(i) + "." + fileExtension[2:]])
-    # Write to file
-    #Output format must be single line and be the input file name + .tokens.
-    with open(outputFile, "wb") as f:
-        writer = UnicodeWriter(f)
+    with open(outputFile, "w") as f:
+        curr_line_empty = True
         for t in lexedWoComments:
             token = t[1]
-            noWS = token.strip()
-            noWS = noWS.replace('\n', '') #Remove new lines
-            noWS = noWS.replace(' ', '_') #Replace any remaining internal spaces
-            if(noWS == ""):
+            token_stripped = token.strip()
+
+            if '\n' in token:
+                if curr_line_empty and t[0] != Token.Text and token_stripped != '':
+                    f.write(token_stripped + "\n")
+                else:
+                    f.write(token_stripped + "\n")
+                curr_line_empty = True
+            elif t[0] == Token.Text:
                 continue
+            else:
+                curr_line_empty = False
+                f.write(token)
+                f.write(' ')
 
-            if(flag == "labelled" or flag == "android" or flag == "api"):
-                if(explicitWrite == True):
-                    noWS = "<" + noWS + "|" + str(t[0]) + ">"
-         
-            f.write(noWS.encode("utf-8"))
-            f.write(' '.encode("utf-8"))
-        f.write('\n'.encode("utf-8")) #Without a new line between each file, there can be a problem with the SRILM ngram tools?
-
-
-def main(sourcePath, outputPath, strFlag, token_split, SKIP_BIG, EXPLICIT_TYPE_WRITE):    
+def main(sourcePath, outputPath, strFlag, token_split, SKIP_BIG, EXPLICIT_TYPE_WRITE, keepLines = False):    
     #Count of Error tokens
     errorCount = 0
 
@@ -68,14 +62,6 @@ def main(sourcePath, outputPath, strFlag, token_split, SKIP_BIG, EXPLICIT_TYPE_W
     # Strip comments and alter strings
     lexedWoComments = tokensExceptTokenType(tokensList, Token.Comment)
     lexedWoComments = tokensExceptTokenType(lexedWoComments, Token.Literal.String.Doc)
-    beforeError = len(lexedWoComments)
-    #Remove Things than didn't lex properly
-    lexedWoComments = tokensExceptTokenType(lexedWoComments, Token.Error)
-    errorCount += beforeError - len(lexedWoComments)
-
-    #if(language == "Javascript"):
-    #    lexedWoComments = mergeDollarSign(lexedWoComments)
-
     lexedWoComments = fixTypes(lexedWoComments, language) #Alter the pygments lexer types to be more comparable between our languages
     lexedWoComments = convertNamespaceTokens(lexedWoComments, language)
 
@@ -128,50 +114,11 @@ def main(sourcePath, outputPath, strFlag, token_split, SKIP_BIG, EXPLICIT_TYPE_W
             continue
         noWSTokens.append((t[0],noWS))
 
-    #noWSTokens = lexedWoComments #Experiment on spacing. Didn't seem to matter if newlines were included.
-
-    #print(noWSTokens)
-    #print(len(noWSTokens))
-
-    skip = False
-    #If over max size, break into chunks of approximately MAX_SIZE at  new lines
-    if(not SKIP_BIG and len(noWSTokens) > MAX_SIZE):
-        print("Big file: " + sourcePath)
-        #print("Lines: " + str(lineCount))
-        #print(lineLengths)
-        #print(lineDict)
-        #SPLIT into chunks of less than MAX_SIZE with each sub file being at least ending in a complete
-        #line.
-        startIndex = 0
-        endIndex = 0
-        lastIndex = 0
-        
-        while(len(noWSTokens[startIndex:]) > MAX_SIZE):
-            print("Piece ID: " + str(i))
-            #print(lastIndex)
-            endIndex = getLastNewLine(noWSTokens, lineDict, startIndex) # What if this is bigger than MAX_SIZE?
-            #print("Start: " + str(startIndex))
-            #print("End: " + str(endIndex))
-            if(endIndex <= startIndex or endIndex+1-startIndex > MAX_SIZE): #Not catching some...
-                print("Aberrant File, enormously long line. Discarding.")
-                skip = True
-                break
-                
-            #endIndex = getLastNewLine(noWSTokens, startIndex) #This is broken now :(
-            print(endIndex)
-
-            print("Printing: " + str(len(noWSTokens[startIndex:endIndex+1])) + " tokens.")
-            writeLexedFile(outputPath, noWSTokens[startIndex:endIndex+1], token_split, EXPLICIT_TYPE_WRITE)
-            i += 1
-            startIndex = endIndex + 1 #Start of the new file one past the end.
-
-        #Write out the last bit
-        if(not skip):
-            writeLexedFile(outputPath, noWSTokens[startIndex:], token_split, EXPLICIT_TYPE_WRITE)
-    elif(len(noWSTokens) <= MAX_SIZE):
-        # print("Normal File: " + sourcePath)
-        writeLexedFile(outputPath, noWSTokens, token_split, EXPLICIT_TYPE_WRITE)
-
+    if keepLines:
+        writeLexedFile(outputPath, lexedWoComments, token_split, EXPLICIT_TYPE_WRITE, keepLines)
+    else:
+        writeLexedFile(outputPath, noWSTokens, token_split, EXPLICIT_TYPE_WRITE, keepLines)    
+    
     return len(noWSTokens) > 0
 
 if __name__ == "__main__":
